@@ -35,15 +35,12 @@
         .status-badge { padding: 12px; border-radius: 10px; margin-bottom: 15px; font-weight: bold; }
         .correct { border: 1px solid #22c55e; color: #22c55e; background: rgba(34, 197, 94, 0.1); }
         .wrong { border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        
-        .ekspla-logo-sutvarkytas {
-            max-width: 180px; height: auto; margin-top: 15px;
-            filter: brightness(0) invert(1); opacity: 0.9;
-        }
+        .ekspla-logo-sutvarkytas { max-width: 180px; height: auto; margin-top: 15px; filter: brightness(0) invert(1); opacity: 0.9; }
         .sponsors { margin-top: 40px; font-size: 12px; text-transform: uppercase; opacity: 0.7; letter-spacing: 1px; }
-        #qrcode { background: white; padding: 10px; margin: 15px auto; display: inline-block; border-radius: 10px; }
+        .admin-section { background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 15px; margin: 20px 0; border: 1px solid rgba(255, 255, 255, 0.1); text-align: left; }
+        .admin-section h4 { margin-top: 0; color: #facc15; text-transform: uppercase; font-size: 14px; text-align: center; }
+        #qrcode { background: white; padding: 10px; margin: 15px auto; display: block; border-radius: 10px; width: 150px; }
         #reader { border-radius: 15px; overflow: hidden; border: 2px solid white !important; margin-bottom: 15px; background: black; }
-        .admin-box { border-top: 1px solid rgba(255,255,255,0.2); margin-top: 20px; padding-top: 20px; }
     </style>
 </head>
 <body>
@@ -63,16 +60,40 @@
             <h3>Renginio eiga</h3>
             <div class="list-item"><span>19:00</span> <span>Atidarymas</span></div>
             <div class="list-item"><span>20:00</span> <span>Orientacinės</span></div>
-            <div class="list-item"><span>23:00</span> <span>Pica ir filmas</span></div>
             <div class="list-item"><span>01:00</span> <span>Apdovanojimai</span></div>
             <button class="menu-btn" onclick="showSection('main-menu')">Atgal</button>
+        </div>
+
+        <div id="admin-login" class="hidden">
+            <h3>Tarybos prisijungimas</h3>
+            <input type="text" id="admin-user" placeholder="Vardas">
+            <input type="password" id="admin-pass" placeholder="Slaptažodis">
+            <button class="menu-btn" onclick="checkAdmin()">Prisijungti</button>
+            <button class="menu-btn" onclick="showSection('main-menu')" style="border:none; opacity:0.6;">Atgal</button>
+        </div>
+
+        <div id="admin-panel" class="hidden">
+            <h2 style="margin-bottom: 5px;">Valdymo pultas</h2>
+            <div class="admin-section">
+                <h4>🛠️ QR kodų generavimas</h4>
+                <input type="text" id="qr-input-text" placeholder="Raktinis žodis...">
+                <button class="menu-btn" onclick="generateQR()" style="padding: 10px;">Generuoti QR</button>
+                <div id="qrcode" class="hidden"></div>
+            </div>
+            <div class="admin-section">
+                <h4>🏆 Rezultatų įrašymas</h4>
+                <input type="text" id="add-name" placeholder="Komanda">
+                <input type="number" id="add-score" placeholder="Taškai">
+                <input type="text" id="add-time" placeholder="Laikas">
+                <button class="menu-btn" style="background: #22c55e; border:none; padding: 10px;" onclick="adminAddResult()">Įrašyti į bazę</button>
+            </div>
+            <button class="menu-btn" onclick="showSection('main-menu')">Atsijungti</button>
         </div>
 
         <div id="team-selection" class="hidden">
             <h3>Komandos pavadinimas</h3>
             <input type="text" id="team-name-input" placeholder="Įveskite vardą...">
             <button class="menu-btn" onclick="startQuiz()">PRADĖTI</button>
-            <button onclick="showSection('main-menu')" style="background:none; border:none; color:grey; cursor:pointer;">Atšaukti</button>
         </div>
 
         <div id="quiz-step" class="hidden">
@@ -98,6 +119,7 @@
         <div id="finish-step" class="hidden">
             <h2 style="color: #22c55e;">FINIŠAS! 🎉</h2>
             <div id="final-stats"></div>
+            <p style="font-size: 12px; color: #aaa;">Rezultatas išsiųstas tarybai.</p>
             <button class="menu-btn" onclick="location.reload()">Baigti</button>
         </div>
 
@@ -105,36 +127,6 @@
             <h3>🏆 TOP 3 Rezultatai</h3>
             <div id="top3-list">Kraunama...</div>
             <button class="menu-btn" onclick="showSection('main-menu')">Atgal</button>
-        </div>
-
-        <div id="admin-login" class="hidden">
-            <h3>Tarybos prisijungimas</h3>
-            <input type="text" id="admin-user" placeholder="Vardas">
-            <input type="password" id="admin-pass" placeholder="Slaptažodis">
-            <button class="menu-btn" onclick="checkAdmin()">Prisijungti</button>
-            <button class="menu-btn" onclick="showSection('main-menu')" style="border:none; font-size:12px;">Atgal</button>
-        </div>
-
-        <div id="admin-panel" class="hidden">
-            <h3>Admin valdymas</h3>
-            
-            <div class="admin-box">
-                <h4>🛠️ QR kodų kūrimas</h4>
-                <input type="text" id="qr-input-text" placeholder="Raktas (pvz. kodas1)">
-                <button class="menu-btn" onclick="generateQR()">Generuoti QR</button>
-                <div id="qrcode"></div>
-            </div>
-
-            <div class="admin-box">
-                <h4>🏆 Rezultatų įrašymas</h4>
-                <input type="text" id="add-name" placeholder="Komanda">
-                <input type="number" id="add-score" placeholder="Taškai">
-                <input type="text" id="add-time" placeholder="Laikas">
-                <button class="menu-btn" style="background: #22c55e;" onclick="adminAddResult()">Įrašyti</button>
-                <button class="menu-btn" style="color: #ef4444; border-color: #ef4444;" onclick="clearResults()">Išvalyti bazę</button>
-            </div>
-
-            <button class="menu-btn" onclick="showSection('main-menu')">Atsijungti</button>
         </div>
     </div>
 
@@ -160,29 +152,32 @@
         { q: "Kuo daugiau atimi, tuo didesnis?", a: "duobe", key: "kodas3", loc: "Rūbinė" }
     ];
 
-    async function showSection(id) {
+    function showSection(id) {
         document.querySelectorAll('.card > div').forEach(div => div.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
         if(id === 'top3-section') renderTop3();
     }
 
     function checkAdmin() {
-        const user = document.getElementById('admin-user').value;
-        const pass = document.getElementById('admin-pass').value;
-        if(user === "admin" && pass === "gsgmt2026") {
-            showSection('admin-panel');
-        } else {
-            alert("Neteisingi duomenys!");
-        }
+        if(document.getElementById('admin-user').value === "admin" && document.getElementById('admin-pass').value === "gsgmt2026") showSection('admin-panel');
+        else alert("Klaida!");
+    }
+
+    function generateQR() {
+        const text = document.getElementById('qr-input-text').value;
+        if(!text) return;
+        const container = document.getElementById('qrcode');
+        container.classList.remove('hidden');
+        container.innerHTML = "";
+        new QRCode(container, { text: text, width: 150, height: 150 });
     }
 
     async function renderTop3() {
         const list = document.getElementById('top3-list');
-        const { data, error } = await _supabase.from('rezultatai').select('*').order('score', { ascending: false }).limit(3);
-        if (error) return list.innerHTML = "Klaida užkraunant bazę.";
-        list.innerHTML = data.length ? "" : "Rezultatų dar nėra.";
+        const { data } = await _supabase.from('rezultatai').select('*').order('score', { ascending: false }).limit(3);
+        list.innerHTML = data && data.length ? "" : "Nėra rezultatų.";
         data.forEach((r, i) => {
-            list.innerHTML += `<div class="list-item"><span>${i+1}. ${r.team}</span> <span>${r.score} tšk. (${r.time_str})</span></div>`;
+            list.innerHTML += `<div class="list-item"><span>${i+1}. ${r.team}</span> <span>${r.score} tšk.</span></div>`;
         });
     }
 
@@ -190,29 +185,13 @@
         const name = document.getElementById('add-name').value;
         const pts = document.getElementById('add-score').value;
         const time = document.getElementById('add-time').value;
-        if(!name) return alert("Įveskite pavadinimą");
-        const { error } = await _supabase.from('rezultatai').insert([{ team: name, score: pts, time_str: time }]);
-        if (error) alert("Klaida įrašant!");
-        else { alert("Pridėta!"); renderTop3(); }
-    }
-
-    async function clearResults() {
-        if(!confirm("Ištrinti viską?")) return;
-        await _supabase.from('rezultatai').delete().neq('team', 'null');
-        renderTop3();
-    }
-
-    function generateQR() {
-        const text = document.getElementById('qr-input-text').value;
-        if(!text) return alert("Įrašykite tekstą!");
-        const container = document.getElementById('qrcode');
-        container.innerHTML = "";
-        new QRCode(container, { text: text, width: 150, height: 150 });
+        await _supabase.from('rezultatai').insert([{ team: name, score: pts, time_str: time }]);
+        alert("Įrašyta!");
     }
 
     function startQuiz() {
         currentTeam = document.getElementById('team-name-input').value;
-        if(!currentTeam) return alert("Įrašykite vardą!");
+        if(!currentTeam) return;
         startTime = new Date();
         showSection('quiz-step');
         prepareNext();
@@ -220,12 +199,12 @@
 
     function checkAnswer() {
         const val = document.getElementById('ans-input').value.toLowerCase().trim();
-        const feedback = document.getElementById('answer-feedback');
-        if(val === quizData[qIdx].a) { score++; feedback.innerText = "TEISINGAI! ✅"; feedback.className = "status-badge correct"; }
-        else { feedback.innerText = "NETEISINGAI ❌"; feedback.className = "status-badge wrong"; }
+        if(val === quizData[qIdx].a) score++;
         document.getElementById('quiz-content').classList.add('hidden');
         document.getElementById('next-loc').classList.remove('hidden');
         document.getElementById('location-text').innerText = quizData[qIdx].loc;
+        document.getElementById('answer-feedback').innerText = val === quizData[qIdx].a ? "TEISINGAI! ✅" : "NETEISINGAI ❌";
+        document.getElementById('answer-feedback').className = "status-badge " + (val === quizData[qIdx].a ? "correct" : "wrong");
     }
 
     function prepareNext() {
@@ -234,6 +213,19 @@
             const timeStr = Math.floor(diff / 60) + ":" + (diff % 60).toString().padStart(2, '0');
             showSection('finish-step');
             document.getElementById('final-stats').innerHTML = `Taškai: ${score}/${quizData.length}<br>Laikas: ${timeStr}`;
+            
+            // --- FORMSPREE SIUNTIMAS ---
+            fetch("https://formspree.io/f/mojklbzq", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    ZINUTE: "GALUTINIS REZULTATAS",
+                    KOMANDA: currentTeam, 
+                    SURINKTA_TASKU: score, 
+                    IS_VISO_KLAUSIMU: quizData.length,
+                    LAIKAS: timeStr 
+                })
+            });
             return;
         }
         if(!document.getElementById('next-loc').classList.contains('hidden')) qIdx++;
