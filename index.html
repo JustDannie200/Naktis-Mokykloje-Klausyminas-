@@ -86,7 +86,7 @@
         </div>
 
         <div id="admin-panel" class="hidden">
-            <h3>REZULTATAI TELEFONE</h3>
+            <h3>LOKALŪS REZULTATAI</h3>
             <div id="results-list" style="text-align: left; margin-bottom: 20px;"></div>
             <button class="menu-btn" onclick="showSection('main-menu')">ATSIJUNGTI</button>
         </div>
@@ -127,24 +127,25 @@
         prepareNext();
     }
 
-    // --- AUTOMATINIS SIUNTIMAS Į GOOGLE SHEETS ---
+    // --- FORMSPREE SIUNTIMAS ---
     function siustiRezultata(komanda, taskas) {
-        const formosID = "1qBhDXbv8NsIaG7bY5M-6JcaU6BDZt6jx-w19dgre3vM"; 
-        const formosURL = `https://docs.google.com/forms/d/e/${formosID}/formResponse`;
-        
-        const duomenys = new URLSearchParams();
-        duomenys.append("entry.1766923264", komanda); 
-        duomenys.append("entry.1385419593", taskas); 
-
-        fetch(formosURL, { method: "POST", mode: "no-cors", body: duomenys })
-        .then(() => console.log("Išsiųsta!"))
-        .catch(e => console.error("Klaida siunčiant:", e));
+        fetch("https://formspree.io/f/mojklbzq", {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                Komanda: komanda, 
+                Atsakyta_Misliu: taskas,
+                Laikas: new Date().toLocaleTimeString()
+            })
+        }).then(response => {
+            if (response.ok) { console.log("Rezultatas nusiųstas į Formspree!"); }
+        });
     }
 
     function checkAnswer() {
         const val = document.getElementById('ans-input').value.toLowerCase().trim();
         if(val === quizData[qIdx].a) {
-            // Išsiunčiame į tavo Google Forms realiu laiku
+            // Siunčiame duomenis į tavo paskyrą
             siustiRezultata(currentTeam, qIdx + 1);
             
             document.getElementById('quiz-content').classList.add('hidden');
@@ -157,6 +158,7 @@
         }
     }
 
+    // --- SKENAVIMAS ---
     function startScanner() {
         document.getElementById('scanner-container').classList.remove('hidden');
         document.getElementById('open-scanner-btn').classList.add('hidden');
@@ -191,7 +193,7 @@
 
     function prepareNext() {
         if(qIdx >= quizData.length - 1 && !document.getElementById('next-loc').classList.contains('hidden')) {
-            alert("SVEIKINAME ĮVEIKUS VISAS UŽDUOTIS!");
+            alert("FINIŠAS! Rezultatai nusiųsti tarybai.");
             location.reload();
             return;
         }
