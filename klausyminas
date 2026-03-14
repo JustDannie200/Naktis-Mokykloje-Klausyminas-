@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mokyklos Mįslių Medžioklė</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { color: var(--primary); text-align: center; margin-top: 0; }
+        .section { display: none; border-top: 2px solid #eee; margin-top: 20px; padding-top: 20px; }
+        .active { display: block; }
+        select, input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #1d4ed8; }
+        .stats { font-size: 0.9em; color: #666; background: #f1f5f9; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🏫 Mįslių Medžioklė</h2>
+
+    <div id="setup-step" class="section active">
+        <p>Įveskite 5 komandų pavadinimus:</p>
+        <div id="name-inputs">
+            <input type="text" class="t-name" placeholder="1-oji komanda">
+            <input type="text" class="t-name" placeholder="2-oji komanda">
+            <input type="text" class="t-name" placeholder="3-oji komanda">
+            <input type="text" class="t-name" placeholder="4-oji komanda">
+            <input type="text" class="t-name" placeholder="5-oji komanda">
+        </div>
+        <button onclick="setupTeams()">Pradėti žaidimą</button>
+    </div>
+
+    <div id="game-step" class="section">
+        <label>Kas atsakinėja?</label>
+        <select id="team-selector"></select>
+
+        <label>Kurią mįslę radote?</label>
+        <select id="question-selector">
+            <option value="0">1 mįslė</option>
+            <option value="1">2 mįslė</option>
+            <option value="2">3 mįslė</option>
+            <option value="3">4 mįslė</option>
+            <option value="4">5 mįslė</option>
+            <option value="5">6 mįslė</option>
+            <option value="6">7 mįslė</option>
+            <option value="7">8 mįslė</option>
+            <option value="8">9 mįslė</option>
+            <option value="9">10 mįslė</option>
+        </select>
+
+        <div style="background: #fff9db; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 5px solid #fcc419;">
+            <strong>Užduotis:</strong> <span id="hint-text">Pasirinkite mįslės numerį...</span>
+        </div>
+
+        <input type="text" id="answer-input" placeholder="Jūsų atsakymas...">
+        <button onclick="submitAnswer()">Pateikti atsakymą</button>
+
+        <div class="stats" id="team-status">
+            Komandos progresas bus čia.
+        </div>
+    </div>
+</div>
+
+<script>
+    let teams = {};
+    const riddles = [
+        "Aš turiu šimtus lapų, bet nesu medis. Kas aš? (Užuomina: Biblioteka)",
+        "Aš turiu tinklą, bet žuvies negaudau. Kas aš? (Užuomina: Sporto salė)",
+        "Aš rodau kelią, bet pati nevaikštau. (Užuomina: Iškaba/Rodyklė)",
+        "Daug burnų, bet nei vienos kalbančios. (Užuomina: Valgykla - lėkštės)",
+        "Turiu kojas, bet nepabėgu; turiu nugarą, bet nepailsiu. (Užuomina: Kėdė)",
+        "Aš seku tave visą dieną, bet vakare pradingstu. (Užuomina: Šešėlis)",
+        "Aš bėgu, bet neturiu kojų. (Užuomina: Laikas/Laikrodis)",
+        "Kuo daugiau iš manęs atimi, tuo didesnis tampu. (Užuomina: Duobė)",
+        "Aš turiu raktus, bet neatidarau spynų. (Užuomina: Pianinas arba Klaviatūra)",
+        "Aš visada prieš tave, bet tu manęs nematai. (Užuomina: Ateitis)"
+    ];
+
+    // Stebi, kada keičiasi mįslės numeris ir parodo tekstą
+    document.getElementById('question-selector').addEventListener('change', function() {
+        document.getElementById('hint-text').innerText = riddles[this.value];
+    });
+
+    function setupTeams() {
+        const inputs = document.querySelectorAll('.t-name');
+        const selector = document.getElementById('team-selector');
+        
+        inputs.forEach((input, index) => {
+            let name = input.value.trim() || `Komanda ${index + 1}`;
+            teams[name] = { solved: 0, answers: {} };
+            let opt = document.createElement('option');
+            opt.value = name;
+            opt.innerText = name;
+            selector.appendChild(opt);
+        });
+
+        document.getElementById('setup-step').classList.remove('active');
+        document.getElementById('game-step').classList.add('active');
+        document.getElementById('hint-text').innerText = riddles[0];
+        updateStatus();
+    }
+
+    function submitAnswer() {
+        const teamName = document.getElementById('team-selector').value;
+        const qIndex = document.getElementById('question-selector').value;
+        const answer = document.getElementById('answer-input').value.trim();
+
+        if (!answer) return alert("Įveskite atsakymą!");
+
+        // Išsaugome atsakymą
+        teams[teamName].answers[qIndex] = answer;
+        
+        // Suskaičiuojame, kiek unikalių mįslių komanda išsprendė
+        teams[teamName].solved = Object.keys(teams[teamName].answers).length;
+
+        alert(`Ačiū, ${teamName}! Atsakymas į ${parseInt(qIndex)+1} mįslę išsaugotas.`);
+        document.getElementById('answer-input').value = "";
+        updateStatus();
+    }
+
+    function updateStatus() {
+        const teamName = document.getElementById('team-selector').value;
+        const status = teams[teamName];
+        document.getElementById('team-status').innerText = 
+            `${teamName} progresas: išspręsta ${status.solved} iš 10 mįslių.`;
+    }
+
+    // Atnaujinti progresą keičiant komandą sąraše
+    document.getElementById('team-selector').onchange = updateStatus;
+</script>
+
+</body>
+</html>
