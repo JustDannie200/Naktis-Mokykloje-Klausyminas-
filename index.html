@@ -3,71 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GŠG Naktis Mokykloje</title>
+    <title>Naktis Mokykloje</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --primary: #2563eb; --success: #22c55e; --bg: #f8fafc; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: url('https://raw.githubusercontent.com/JustDannie200/Naktis-Mokykloje-Klausyminas-/main/download%20(3).gif') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* LOGO APDIRBIMAS */
+        .logo-img {
+            max-width: 90%;
+            height: auto;
+            mix-blend-mode: screen; 
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        .menu-btn {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+            padding: 15px;
+            margin: 12px 0;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+
+        .menu-btn:hover {
+            background: white;
+            color: black;
+        }
+
+        input { 
+            width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; 
+            border: 1px solid white; background: transparent; color: white; text-align: center;
+            font-size: 16px;
+        }
+
         .hidden { display: none; }
-        button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
-        .action-btn { background: var(--primary); color: white; }
-        .scan-btn { background: #334155; color: white; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
         
-        #reader { width: 100%; border-radius: 15px; overflow: hidden; margin-bottom: 10px; }
-        .status-badge { padding: 8px; border-radius: 8px; font-size: 14px; margin-bottom: 15px; background: #fee2e2; color: #ef4444; font-weight: bold; }
-        .unlocked { background: #dcfce7; color: #166534; }
+        #reader { border-radius: 15px; overflow: hidden; border: 2px solid white !important; margin-bottom: 10px; }
+        
+        .status-badge { padding: 10px; border-radius: 8px; margin-bottom: 15px; background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .unlocked { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid #22c55e; }
+
+        .sponsors {
+            margin-top: 40px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div id="main-menu">
-        <h2 style="color: var(--primary)">🏫 GŠG Nuotykis</h2>
-        <button class="action-btn" onclick="showSection('team-selection')">Pradėti žaidimą</button>
-        <button style="background:#e2e8f0; color:#475569" onclick="showSection('admin-login')">Tarybai</button>
-        <button style="background:#e2e8f0; color:#475569" onclick="showSection('qr-generator')">QR kūrimas</button>
-    </div>
+<div class="container">
+    <img src="https://raw.githubusercontent.com/JustDannie200/Naktis-Mokykloje-Klausyminas-/main/Screenshot%202026-03-14%20152549.jpg" class="logo-img">
 
-    <div id="team-selection" class="hidden">
-        <h3>Pasirinkite komandą</h3>
-        <input type="text" id="team-name-input" placeholder="Įrašykite pavadinimą...">
-        <button class="action-btn" onclick="startQuiz()">Toliau</button>
-    </div>
-
-    <div id="quiz-step" class="hidden">
-        <div id="lock-status" class="status-badge">🔒 Klausimas užrakintas. Raskite QR kodą!</div>
-        
-        <div id="scanner-container" class="hidden">
-            <div id="reader"></div>
-            <button onclick="stopScanner()" style="background:#64748b; color:white">Atšaukti</button>
+    <div class="card">
+        <div id="main-menu">
+            <button class="menu-btn" onclick="showSection('team-selection')">Pasirinkti komandą</button>
+            <button class="menu-btn" onclick="showSection('admin-login')">GŠG Mokinių taryba</button>
+            <button class="menu-btn" onclick="showSection('qr-generator')">QR kodų darymas</button>
         </div>
 
-        <div id="quiz-content" class="hidden">
-            <h3 id="riddle-text">Mįslė pasirodys čia...</h3>
-            <input type="text" id="ans-input" placeholder="Jūsų atsakymas...">
-            <button class="action-btn" onclick="checkAnswer()">Tikrinti</button>
+        <div id="team-selection" class="hidden">
+            <h3>Įrašykite pavadinimą</h3>
+            <input type="text" id="team-name-input" placeholder="KOMANDA...">
+            <button class="menu-btn" onclick="startQuiz()">PRADĖTI</button>
+            <button onclick="showSection('main-menu')" style="background:none; border:none; color:white; cursor:pointer; margin-top:10px;">Atgal</button>
         </div>
 
-        <button id="open-scanner-btn" class="scan-btn" onclick="startScanner()">📷 Skenuoti QR kodą</button>
+        <div id="quiz-step" class="hidden">
+            <div id="lock-status" class="status-badge">🔒 RASKITE QR KODĄ</div>
+            
+            <div id="scanner-container" class="hidden">
+                <div id="reader"></div>
+                <button class="menu-btn" onclick="stopScanner()">Atšaukti skenavimą</button>
+            </div>
 
-        <div id="next-loc" class="hidden" style="background:#f0f9ff; padding:15px; border-radius:10px; margin-top:15px">
-            <p>✅ Teisingai! Kita vieta:</p>
-            <strong id="location-text"></strong>
-            <button class="action-btn" onclick="prepareNext()">Eiti toliau</button>
+            <div id="quiz-content" class="hidden">
+                <p id="riddle-text" style="font-size: 1.2em; margin-bottom: 20px;"></p>
+                <input type="text" id="ans-input" placeholder="Atsakymas...">
+                <button class="menu-btn" onclick="checkAnswer()">Tikrinti</button>
+            </div>
+
+            <button id="open-scanner-btn" class="menu-btn" style="background: white; color: black;" onclick="startScanner()">📷 SKENUOTI KODĄ</button>
+
+            <div id="next-loc" class="hidden">
+                <h3 style="color: #22c55e;">TEISINGAI!</h3>
+                <p>Kita stotelė:</p>
+                <p id="location-text" style="font-weight: bold; font-size: 1.1em;"></p>
+                <button class="menu-btn" onclick="prepareNext()">EITI TOLIAU</button>
+            </div>
+        </div>
+
+        <div id="admin-login" class="hidden">
+            <h3>PRISIJUNGIMAS</h3>
+            <input type="text" id="admin-user" placeholder="Vartotojas">
+            <input type="password" id="admin-pass" placeholder="Slaptažodis">
+            <button class="menu-btn" onclick="checkAdmin()">PRISIJUNGTI</button>
+            <button class="menu-btn" onclick="showSection('main-menu')">ATGAL</button>
+        </div>
+
+        <div id="admin-panel" class="hidden">
+            <h3>REZULTATAI</h3>
+            <div id="results-list" style="text-align: left; margin-bottom: 20px;"></div>
+            <button class="menu-btn" onclick="showSection('main-menu')">ATSIJUNGTI</button>
+        </div>
+
+        <div id="qr-generator" class="hidden">
+            <h3>KURTI QR</h3>
+            <input type="text" id="qr-url" placeholder="Raktinis žodis">
+            <button class="menu-btn" onclick="generateQR()">GENERUOTI</button>
+            <div id="qrcode" style="background: white; padding: 10px; display: inline-block; margin-top: 10px;"></div>
+            <button class="menu-btn" onclick="showSection('main-menu')">ATGAL</button>
         </div>
     </div>
 
-    <div id="admin-login" class="hidden">...</div>
-    <div id="qr-generator" class="hidden">
-        <h3>QR Kūrėjas</h3>
-        <p>Užkoduokite tekstą, kuris atrakins klausimą (pvz: raktas1)</p>
-        <input type="text" id="qr-url" placeholder="Raktinis žodis">
-        <button class="action-btn" onclick="generateQR()">Sukurti</button>
-        <div id="qrcode" style="margin-top:15px"></div>
-        <button onclick="showSection('main-menu')">Atgal</button>
+    <div class="sponsors">
+        Pagrindiniai rėmėjai:
+        <div style="margin-top: 5px; font-weight: bold; opacity: 1;">GŠG Taryba</div>
     </div>
 </div>
 
@@ -75,11 +162,12 @@
     let currentTeam = "";
     let qIdx = 0;
     let scanner;
+    let gameResults = JSON.parse(localStorage.getItem('gsg_results')) || {};
 
-    // KONFIGŪRACIJA: q-klausimas, a-atsakymas, key-QR kodo tekstas, loc-kur eiti toliau
     const quizData = [
-        { q: "Aš turiu šimtus lapų, bet nesu medis?", a: "knyga", key: "startas123", loc: "Prie valgyklos durų" },
-        { q: "Aš turiu tinklą, bet žuvies negaudau?", a: "krepsinis", key: "sportas99", loc: "Antrame aukšte prie akvariumo" }
+        { q: "Aš turiu šimtus lapų, bet nesu medis?", a: "knyga", key: "kodas1", loc: "Prie mokyklos bibliotekos durų" },
+        { q: "Aš turiu tinklą, bet žuvies negaudau?", a: "krepsinis", key: "kodas2", loc: "Sporto salės kairysis kampas" },
+        { q: "Kuo daugiau atimi, tuo didesnis?", a: "duobe", key: "kodas3", loc: "Rūbinė, 5 spintelė" }
     ];
 
     function showSection(id) {
@@ -97,18 +185,17 @@
     function startScanner() {
         document.getElementById('scanner-container').classList.remove('hidden');
         document.getElementById('open-scanner-btn').classList.add('hidden');
-        
         scanner = new Html5Qrcode("reader");
         scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, 
             (decodedText) => {
-                if(decodedText === quizData[qIdx].key) {
+                if(decodedText.trim() === quizData[qIdx].key) {
                     unlockQuestion();
                     stopScanner();
                 } else {
                     alert("Netinkamas kodas! Ieškokite kito.");
                 }
             }
-        ).catch(err => alert("Kameros klaida. Patikrinkite leidimus."));
+        ).catch(err => alert("Kameros klaida. Suteikite leidimą kamerai!"));
     }
 
     function stopScanner() {
@@ -122,7 +209,7 @@
 
     function unlockQuestion() {
         const status = document.getElementById('lock-status');
-        status.innerText = "🔓 Klausimas atrakintas!";
+        status.innerText = "🔓 KLAUSIMAS ATRAKINTAS";
         status.className = "status-badge unlocked";
         document.getElementById('quiz-content').classList.remove('hidden');
         document.getElementById('riddle-text').innerText = quizData[qIdx].q;
@@ -135,32 +222,48 @@
             document.getElementById('quiz-content').classList.add('hidden');
             document.getElementById('next-loc').classList.remove('hidden');
             document.getElementById('location-text').innerText = quizData[qIdx].loc;
+            gameResults[currentTeam] = (gameResults[currentTeam] || 0) + 1;
+            localStorage.setItem('gsg_results', JSON.stringify(gameResults));
         } else {
-            alert("Neteisingas atsakymas!");
+            alert("Neteisingas atsakymas! Bandyk dar kartą.");
         }
     }
 
     function prepareNext() {
-        if(qIdx >= quizData.length - 1 && document.getElementById('next-loc').classList.contains('hidden') === false) {
-            alert("Sveikiname baigus!");
+        if(qIdx >= quizData.length - 1 && !document.getElementById('next-loc').classList.contains('hidden')) {
+            alert("SVEIKINAME! JŪS ĮVEIKĖTE VISAS UŽDUOTIS.");
             location.reload();
             return;
         }
-        if(!document.getElementById('next-loc').classList.contains('hidden')) {
-            qIdx++;
-        }
+        if(!document.getElementById('next-loc').classList.contains('hidden')) qIdx++;
+        
         document.getElementById('next-loc').classList.add('hidden');
         document.getElementById('quiz-content').classList.add('hidden');
         document.getElementById('open-scanner-btn').classList.remove('hidden');
         const status = document.getElementById('lock-status');
-        status.innerText = "🔒 Klausimas užrakintas. Raskite QR kodą!";
+        status.innerText = "🔒 RASKITE QR KODĄ";
         status.className = "status-badge";
         document.getElementById('ans-input').value = "";
     }
 
-    // QR Kodo generavimas (adminui)
+    function checkAdmin() {
+        if(document.getElementById('admin-user').value === "admin" && document.getElementById('admin-pass').value === "gsg2026") {
+            renderResults();
+            showSection('admin-panel');
+        } else { alert("Neteisingi duomenys"); }
+    }
+
+    function renderResults() {
+        const list = document.getElementById('results-list');
+        list.innerHTML = "";
+        for (let t in gameResults) {
+            list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #444"><strong>${t}:</strong> ${gameResults[t]} taškai</div>`;
+        }
+    }
+
     function generateQR() {
         const txt = document.getElementById('qr-url').value;
+        if(!txt) return;
         document.getElementById('qrcode').innerHTML = "";
         new QRCode(document.getElementById("qrcode"), { text: txt, width: 128, height: 128 });
     }
