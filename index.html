@@ -4,136 +4,158 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Naktis Mokykloje | GŠG</title>
+    
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <style>
+        :root { --accent: #facc15; --error: #ef4444; --success: #22c55e; }
+        
         body {
-            margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif;
             background: url('fonas.gif') no-repeat center center fixed;
             background-size: cover; color: white; display: flex; justify-content: center; min-height: 100vh;
         }
+
+        /* Loading Screen */
+        #loader {
+            position: fixed; top:0; left:0; width:100%; height:100%; 
+            background: black; z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; transition: 0.5s;
+        }
+        .spinner {
+            width: 50px; height: 50px; border: 5px solid rgba(250, 204, 21, 0.2);
+            border-top: 5px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         .container { width: 100%; max-width: 500px; padding: 20px; text-align: center; }
         .logo-img { max-width: 90%; height: auto; mix-blend-mode: screen; margin-bottom: 10px; }
+        
         .card {
             background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
             padding: 25px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-            max-height: 80vh; overflow-y: auto; /* Pridėtas skrolinimas ilgam tvarkaraščiui */
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6); max-height: 80vh; overflow-y: auto;
         }
+
         .menu-btn {
             background: transparent; border: 2px solid white; color: white;
             padding: 14px; margin: 10px 0; width: 100%; border-radius: 12px;
             font-size: 16px; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.3s;
-            display: flex; align-items: center; justify-content: center; gap: 10px;
         }
         .menu-btn:hover { background: white; color: black; }
+        .menu-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
         .hidden { display: none; }
+        
         input { 
             width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; 
-            border: 1px solid white; background: rgba(255,255,255,0.05); color: white; text-align: center; font-size: 16px; outline: none;
+            border: 1px solid white; background: rgba(255,255,255,0.05); color: white; text-align: center; font-size: 16px;
         }
-        .list-item { background: rgba(255,255,255,0.1); margin: 6px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #facc15; font-size: 14px; }
-        .status-badge { padding: 12px; border-radius: 10px; margin-bottom: 15px; font-weight: bold; }
-        .correct { border: 1px solid #22c55e; color: #22c55e; background: rgba(34, 197, 94, 0.1); }
-        .wrong { border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        .ekspla-logo-sutvarkytas { max-width: 180px; height: auto; margin-top: 15px; filter: brightness(0) invert(1); opacity: 0.9; }
-        .sponsors { margin-top: 40px; font-size: 12px; text-transform: uppercase; opacity: 0.7; letter-spacing: 1px; }
+
+        .list-item { background: rgba(255,255,255,0.1); margin: 6px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; font-size: 14px; }
+        
+        .ekspla-logo-sutvarkytas { max-width: 180px; filter: brightness(0) invert(1); opacity: 0.9; margin-top: 15px; }
+        .sponsors { margin-top: 40px; font-size: 12px; text-transform: uppercase; opacity: 0.7; }
+        
         #qrcode { background: white; padding: 10px; margin: 15px auto; display: block; border-radius: 10px; width: 150px; }
         #reader { border-radius: 15px; overflow: hidden; border: 2px solid white !important; margin-bottom: 15px; background: black; }
     </style>
 </head>
 <body>
 
+<div id="loader">
+    <div class="spinner"></div>
+    <p style="margin-top: 20px; letter-spacing: 2px;">KRAUNAMA...</p>
+</div>
+
 <div class="container">
     <img src="logo.jpg" class="logo-img">
 
     <div class="card">
         <div id="main-menu">
-            <button class="menu-btn" onclick="showSection('team-selection')">Pradėti žaidimą</button>
+            <div id="game-status-msg" style="color: var(--error); margin-bottom: 10px; font-weight: bold;" class="hidden">🔴 ŽAIDIMAS LAIKINAI UŽDARYTAS</div>
+            <button class="menu-btn" id="start-game-btn" onclick="showSection('team-selection')">Pradėti žaidimą</button>
             <button class="menu-btn" onclick="showSection('schedule-section')">📅 Tvarkaraštis</button>
             <button class="menu-btn" onclick="showSection('top3-section')">🏆 TOP 3 Rezultatai</button>
             <button class="menu-btn" onclick="showSection('admin-login')">Mokinių taryba</button>
         </div>
 
         <div id="schedule-section" class="hidden">
-            <h3 style="color: #facc15;">📅 Renginio programa</h3>
-            <div class="list-item"><span>18:30 - 20:00</span> <span>Registracija</span></div>
-            <div class="list-item"><span>20:00 - 20:15</span> <span>Atidarymas</span></div>
-            <div class="list-item"><span>20:15 - 22:15</span> <span>Madų šou</span></div>
-            <div class="list-item"><span>22:15 - 22:30</span> <span>Pertrauka</span></div>
-            <div class="list-item"><span>22:30 - 00:30</span> <span>Diskoteka</span></div>
-            <div class="list-item"><span>00:30 - 01:00</span> <span>Pertrauka</span></div>
-            <div class="list-item"><span>01:00 - 02:30</span> <span>Orientacinės</span></div>
-            <div class="list-item"><span>02:30 - 03:30</span> <span>Ilgoji pertrauka</span></div>
-            <div class="list-item"><span>03:30 - 05:00</span> <span>Filmo peržiūra</span></div>
-            <div class="list-item"><span>05:00 - 07:00</span> <span>Miegojimas</span></div>
-            <div class="list-item"><span>07:00 - 07:15</span> <span>Mankšta</span></div>
-            <div class="list-item"><span>07:15 - 08:00</span> <span>Pabaiga</span></div>
+            <h3 style="color: var(--accent);">📅 PROGRAMA</h3>
+            <div id="schedule-list">
+                <div class="list-item"><span>18:30 - 20:00</span> <span>Registracija</span></div>
+                <div class="list-item"><span>20:00 - 20:15</span> <span>Atidarymas</span></div>
+                <div class="list-item"><span>20:15 - 22:15</span> <span>Madų šou</span></div>
+                <div class="list-item"><span>22:30 - 00:30</span> <span>Diskoteka</span></div>
+                <div class="list-item"><span>01:00 - 02:30</span> <span>Orientacinės</span></div>
+                <div class="list-item"><span>03:30 - 05:00</span> <span>Filmas</span></div>
+                <div class="list-item"><span>07:00 - 08:00</span> <span>Pabaiga</span></div>
+            </div>
             <button class="menu-btn" onclick="showSection('main-menu')">Atgal</button>
         </div>
 
         <div id="admin-login" class="hidden">
-            <h3>Tarybos prisijungimas</h3>
+            <h3>Admin prisijungimas</h3>
             <input type="text" id="admin-user" placeholder="Vardas">
             <input type="password" id="admin-pass" placeholder="Slaptažodis">
             <button class="menu-btn" onclick="checkAdmin()">Prisijungti</button>
-            <button class="menu-btn" onclick="showSection('main-menu')" style="border:none; opacity:0.6;">Atgal</button>
+            <button class="menu-btn" onclick="showSection('main-menu')" style="border:none; opacity:0.5;">Atgal</button>
         </div>
 
         <div id="admin-panel" class="hidden">
-            <h3>Sveiki, Admin</h3>
+            <h3>Valdymas</h3>
+            <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                <p id="status-text">Būsena: Tikrinama...</p>
+                <button class="menu-btn" id="toggle-lock-btn" onclick="toggleGameLock()" style="background: var(--accent); color: black; border:none;">KEISTI STATUSĄ</button>
+            </div>
             <button class="menu-btn" onclick="showSection('admin-qr-section')">🛠️ QR KODŲ DARYMAS</button>
             <button class="menu-btn" onclick="showSection('admin-results-section')">🏆 REZULTATŲ ĮRAŠYMAS</button>
-            <button class="menu-btn" onclick="showSection('main-menu')" style="border-color: #ef4444; color: #ef4444; margin-top: 30px;">Atsijungti</button>
+            <button class="menu-btn" onclick="logoutAdmin()" style="border-color: var(--error); color: var(--error);">Atsijungti</button>
         </div>
 
         <div id="admin-qr-section" class="hidden">
-            <h3>🛠️ QR Generavimas</h3>
-            <input type="text" id="qr-input-text" placeholder="Raktas (pvz. kodas1)">
-            <button class="menu-btn" onclick="generateQR()">Generuoti QR</button>
+            <h3>QR Generavimas</h3>
+            <input type="text" id="qr-input-text" placeholder="Raktas">
+            <button class="menu-btn" onclick="generateQR()">Generuoti</button>
             <div id="qrcode" class="hidden"></div>
-            <button class="menu-btn" onclick="showSection('admin-panel')">Atgal į Admin</button>
+            <button class="menu-btn" onclick="showSection('admin-panel')">Atgal</button>
         </div>
 
         <div id="admin-results-section" class="hidden">
-            <h3>🏆 Rezultatų įrašymas</h3>
+            <h3>Įrašyti rezultatą</h3>
             <input type="text" id="add-name" placeholder="Komanda">
             <input type="number" id="add-score" placeholder="Taškai">
             <input type="text" id="add-time" placeholder="Laikas">
-            <button class="menu-btn" style="background: #22c55e; border:none;" onclick="adminAddResult()">Įrašyti</button>
-            <button class="menu-btn" onclick="showSection('admin-panel')">Atgal į Admin</button>
+            <button class="menu-btn" style="background: var(--success); border:none;" onclick="adminAddResult()">Įrašyti</button>
+            <button class="menu-btn" onclick="showSection('admin-panel')">Atgal</button>
         </div>
 
         <div id="team-selection" class="hidden">
             <h3>Komandos pavadinimas</h3>
-            <input type="text" id="team-name-input" placeholder="Vardas...">
+            <input type="text" id="team-name-input" placeholder="Įveskite vardą...">
             <button class="menu-btn" onclick="startQuiz()">PRADĖTI</button>
         </div>
 
         <div id="quiz-step" class="hidden">
-            <div id="lock-status" class="status-badge" style="background: rgba(255,255,255,0.1);">🔒 RASKITE QR KODĄ</div>
+            <div id="lock-status" style="margin-bottom: 15px;">🔒 RASKITE QR KODĄ</div>
             <div id="scanner-container" class="hidden">
                 <div id="reader"></div>
                 <button class="menu-btn" onclick="stopScanner()">Atšaukti</button>
             </div>
             <div id="quiz-content" class="hidden">
-                <p id="riddle-text"></p>
+                <p id="riddle-text" style="font-style: italic;"></p>
                 <input type="text" id="ans-input" placeholder="Atsakymas">
                 <button class="menu-btn" onclick="checkAnswer()">Tikrinti</button>
             </div>
-            <button id="open-scanner-btn" class="menu-btn" style="background: white; color: black;" onclick="startScanner()">📷 SKENUOTI KODĄ</button>
-        </div>
-
-        <div id="finish-step" class="hidden">
-            <h2 style="color: #22c55e;">FINIŠAS! 🎉</h2>
-            <div id="final-stats"></div>
-            <button class="menu-btn" onclick="location.reload()">Baigti</button>
+            <button id="open-scanner-btn" class="menu-btn" style="background: white; color: black;" onclick="startScanner()">📷 SKENUOTI</button>
         </div>
 
         <div id="top3-section" class="hidden">
-            <h3>🏆 TOP 3 Rezultatai</h3>
-            <div id="top3-list">Kraunama...</div>
+            <h3>🏆 TOP 3</h3>
+            <div id="top3-list"></div>
             <button class="menu-btn" onclick="showSection('main-menu')">Atgal</button>
         </div>
     </div>
@@ -141,23 +163,65 @@
     <div class="sponsors">
         Pagrindinis rėmėjas:<br>
         <img src="ekspla_no_bg.png" class="ekspla-logo-sutvarkytas">
-        <br><br>
-        GŠG Mokinių Taryba<br>
-        2026
+        <br><br>GŠG Mokinių Taryba | 2026
     </div>
 </div>
 
 <script>
+    // --- KONFIGŪRACIJA ---
     const SB_URL = "https://yvnifbghzoqmkslesgkh.supabase.co";
-    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bmlmYmdoem9xbWtzbGVzZ2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0OTc4MjYsImV4cCI6MjA4OTA3MzgyNn0.n_9T9i7tRNtBb8Q-MQ_9ZTiv5DDo8TVYq9AtzOLQTr8"; 
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bmlmYmdoem9xbWtzbGVzZ2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0OTc4MjYsImV4cCI6MjA4OTA3MzgyNn0.n_9T9i7tRNtBb8Q-MQ_9ZTiv5DDo8TVYq9AtzOLQTr8";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
+    // Saugumas: Base64 koduoti duomenys (admin / gsgmt2026)
+    const _u = "YWRtaW4="; 
+    const _p = "Z3NnbXQyMDI2";
+
+    let gameLocked = false;
     let currentTeam = "", qIdx = 0, score = 0, startTime, scanner;
+    
     const quizData = [
-        { q: "Aš turiu šimtus lapų, bet nesu medis?", a: "knyga", key: "kodas1", loc: "Biblioteka" },
-        { q: "Aš turiu tinklą, bet žuvies negaudau?", a: "krepsinis", key: "kodas2", loc: "Sporto salė" },
-        { q: "Kuo daugiau atimi, tuo didesnis?", a: "duobe", key: "kodas3", loc: "Rūbinė" }
+        { q: "Aš turiu šimtus lapų, bet nesu medis?", a: "knyga", key: "kodas1" },
+        { q: "Aš turiu tinklą, bet žuvies negaudau?", a: "krepsinis", key: "kodas2" }
     ];
+
+    // --- PRADŽIA ---
+    window.onload = async () => {
+        await checkGameStatus();
+        setTimeout(() => { document.getElementById('loader').style.opacity = '0'; 
+        setTimeout(() => document.getElementById('loader').style.display = 'none', 500); }, 1000);
+    };
+
+    async function checkGameStatus() {
+        const { data } = await _supabase.from('nustatymai').select('*').eq('id', 1).single();
+        if (data) {
+            gameLocked = data.is_locked;
+            const btn = document.getElementById('start-game-btn');
+            const msg = document.getElementById('game-status-msg');
+            btn.disabled = gameLocked;
+            gameLocked ? msg.classList.remove('hidden') : msg.classList.add('hidden');
+            document.getElementById('status-text').innerText = "Būsena: " + (gameLocked ? "UŽRAKINTA 🔒" : "ATIDARYTA ✅");
+        }
+    }
+
+    async function toggleGameLock() {
+        const { error } = await _supabase.from('nustatymai').update({ is_locked: !gameLocked }).eq('id', 1);
+        if(!error) {
+            Swal.fire('Sėkmė!', 'Žaidimo būsena pakeista.', 'success');
+            checkGameStatus();
+        }
+    }
+
+    function checkAdmin() {
+        const u = document.getElementById('admin-user').value;
+        const p = document.getElementById('admin-pass').value;
+        if(btoa(u) === _u && btoa(p) === _p) {
+            Swal.fire({ title: 'Sveiki!', icon: 'success', timer: 1000, showConfirmButton: false });
+            showSection('admin-panel');
+        } else {
+            Swal.fire('Klaida!', 'Neteisingas vardas arba slaptažodis.', 'error');
+        }
+    }
 
     function showSection(id) {
         document.querySelectorAll('.card > div').forEach(div => div.classList.add('hidden'));
@@ -165,9 +229,52 @@
         if(id === 'top3-section') renderTop3();
     }
 
-    function checkAdmin() {
-        if(document.getElementById('admin-user').value === "admin" && document.getElementById('admin-pass').value === "gsgmt2026") showSection('admin-panel');
-        else alert("Neteisingi duomenys!");
+    async function renderTop3() {
+        const { data } = await _supabase.from('rezultatai').select('*').order('score', { ascending: false }).limit(3);
+        const list = document.getElementById('top3-list');
+        list.innerHTML = data && data.length ? "" : "Nėra rezultatų.";
+        data.forEach((r, i) => {
+            list.innerHTML += `<div class="list-item"><span>${i+1}. ${r.team}</span> <span>${r.score} tšk.</span></div>`;
+        });
+    }
+
+    async function adminAddResult() {
+        const name = document.getElementById('add-name').value;
+        const pts = document.getElementById('add-score').value;
+        const time = document.getElementById('add-time').value;
+        const { error } = await _supabase.from('rezultatai').insert([{ team: name, score: pts, time_str: time }]);
+        if (!error) {
+            Swal.fire('Įrašyta!', 'Komanda pridėta į TOP 3.', 'success');
+            document.getElementById('add-name').value = "";
+        }
+    }
+
+    function startQuiz() {
+        currentTeam = document.getElementById('team-name-input').value;
+        if(!currentTeam) return Swal.fire('Ei!', 'Įrašyk komandos vardą.', 'warning');
+        startTime = new Date();
+        showSection('quiz-step');
+    }
+
+    function checkAnswer() {
+        const val = document.getElementById('ans-input').value.toLowerCase().trim();
+        const correct = val === quizData[qIdx].a;
+        if(correct) score++;
+        
+        Swal.fire({
+            title: correct ? 'Teisingai! ✅' : 'Neteisingai ❌',
+            text: correct ? 'Gali keliauti toliau.' : 'Bandyk rasti kitą užuominą.',
+            icon: correct ? 'success' : 'error',
+            confirmButtonText: 'Gerai'
+        }).then(() => {
+            if(qIdx >= quizData.length - 1) {
+                Swal.fire('Finišas!', `Surinkai ${score} taškų.`, 'info').then(() => location.reload());
+            } else {
+                qIdx++;
+                document.getElementById('quiz-content').classList.add('hidden');
+                document.getElementById('open-scanner-btn').classList.remove('hidden');
+            }
+        });
     }
 
     function generateQR() {
@@ -179,69 +286,23 @@
         new QRCode(container, { text: text, width: 150, height: 150 });
     }
 
-    async function renderTop3() {
-        const list = document.getElementById('top3-list');
-        const { data } = await _supabase.from('rezultatai').select('*').order('score', { ascending: false }).limit(3);
-        list.innerHTML = data && data.length ? "" : "Rezultatų nėra.";
-        data.forEach((r, i) => {
-            list.innerHTML += `<div class="list-item"><span>${i+1}. ${r.team}</span> <span>${r.score} tšk.</span></div>`;
-        });
-    }
-
-    async function adminAddResult() {
-        const name = document.getElementById('add-name').value;
-        const pts = document.getElementById('add-score').value;
-        const time = document.getElementById('add-time').value;
-        await _supabase.from('rezultatai').insert([{ team: name, score: pts, time_str: time }]);
-        alert("Įrašyta!");
-    }
-
-    function startQuiz() {
-        currentTeam = document.getElementById('team-name-input').value;
-        if(!currentTeam) return;
-        startTime = new Date();
-        showSection('quiz-step');
-        prepareNext();
-    }
-
-    function checkAnswer() {
-        const val = document.getElementById('ans-input').value.toLowerCase().trim();
-        if(val === quizData[qIdx].a) score++;
-        const diff = Math.floor((new Date() - startTime) / 1000);
-        const timeStr = Math.floor(diff / 60) + ":" + (diff % 60).toString().padStart(2, '0');
-        showSection('finish-step');
-        document.getElementById('final-stats').innerHTML = `Taškai: ${score}/${quizData.length}<br>Laikas: ${timeStr}`;
-        
-        fetch("https://formspree.io/f/mojklbzq", {
-            method: "POST",
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                Komanda: currentTeam, 
-                Taskai: score,
-                Rezultatas: score + "/" + quizData.length,
-                Laikas: timeStr
-            })
-        });
-    }
-
-    function prepareNext() {
-        document.getElementById('open-scanner-btn').classList.remove('hidden');
-    }
-
     function startScanner() {
         document.getElementById('scanner-container').classList.remove('hidden');
         scanner = new Html5Qrcode("reader");
         scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
             if(text.trim() === quizData[qIdx].key) {
+                stopScanner();
                 document.getElementById('quiz-content').classList.remove('hidden');
                 document.getElementById('riddle-text').innerText = quizData[qIdx].q;
-                stopScanner();
                 document.getElementById('open-scanner-btn').classList.add('hidden');
+            } else {
+                Swal.fire('Ups!', 'Šis QR kodas netinka šiai stotelei.', 'warning');
             }
         });
     }
 
     function stopScanner() { if(scanner) scanner.stop().then(() => document.getElementById('scanner-container').classList.add('hidden')); }
+    function logoutAdmin() { location.reload(); }
 </script>
 </body>
 </html>
