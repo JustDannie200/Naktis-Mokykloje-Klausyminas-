@@ -37,7 +37,7 @@
         .card {
             background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
             padding: 25px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6); max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6); max-height: 85vh; overflow-y: auto;
         }
 
         .menu-btn {
@@ -55,7 +55,18 @@
             border: 1px solid white; background: rgba(255,255,255,0.05); color: white; text-align: center; font-size: 16px;
         }
 
-        .list-item { background: rgba(255,255,255,0.1); margin: 6px 0; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; font-size: 14px; }
+        /* GELTONI BRŪKŠNIAI ŠONE */
+        .list-item { 
+            background: rgba(255,255,255,0.1); 
+            margin: 8px 0; 
+            padding: 12px; 
+            border-radius: 8px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            border-left: 4px solid var(--accent); /* Štai tie brūkšniai */
+            font-size: 14px; 
+        }
         
         .ekspla-logo-sutvarkytas { max-width: 180px; filter: brightness(0) invert(1); opacity: 0.9; margin-top: 15px; }
         .sponsors { margin-top: 40px; font-size: 12px; text-transform: uppercase; opacity: 0.7; }
@@ -87,12 +98,17 @@
             <h3 style="color: var(--accent);">📅 PROGRAMA</h3>
             <div id="schedule-list">
                 <div class="list-item"><span>18:30 - 20:00</span> <span>Registracija</span></div>
-                <div class="list-item"><span>20:00 - 20:15</span> <span>Atidarymas</span></div>
+                <div class="list-item"><span>20:00 - 20:15</span> <span>Pradžia</span></div>
                 <div class="list-item"><span>20:15 - 22:15</span> <span>Madų šou</span></div>
+                <div class="list-item"><span>22:15 - 22:30</span> <span>Pertrauka</span></div>
                 <div class="list-item"><span>22:30 - 00:30</span> <span>Diskoteka</span></div>
+                <div class="list-item"><span>00:30 - 01:00</span> <span>Pertrauka</span></div>
                 <div class="list-item"><span>01:00 - 02:30</span> <span>Orientacinės</span></div>
-                <div class="list-item"><span>03:30 - 05:00</span> <span>Filmas</span></div>
-                <div class="list-item"><span>07:00 - 08:00</span> <span>Pabaiga</span></div>
+                <div class="list-item"><span>02:30 - 03:30</span> <span>Ilgoji pertrauka</span></div>
+                <div class="list-item"><span>03:30 - 05:00</span> <span>Filmo peržiūra</span></div>
+                <div class="list-item"><span>05:00 - 07:00</span> <span>Miegojimas</span></div>
+                <div class="list-item"><span>07:00 - 07:15</span> <span>Mankšta</span></div>
+                <div class="list-item"><span>07:15 - 08:00</span> <span>Pabaiga</span></div>
             </div>
             <button class="menu-btn" onclick="showSection('main-menu')">Atgal</button>
         </div>
@@ -146,7 +162,7 @@
                 <button class="menu-btn" onclick="stopScanner()">Atšaukti</button>
             </div>
             <div id="quiz-content" class="hidden">
-                <p id="riddle-text" style="font-style: italic;"></p>
+                <p id="riddle-text" style="font-style: italic; margin-bottom: 10px;"></p>
                 <input type="text" id="ans-input" placeholder="Atsakymas">
                 <button class="menu-btn" onclick="checkAnswer()">Tikrinti</button>
             </div>
@@ -173,7 +189,7 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bmlmYmdoem9xbWtzbGVzZ2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0OTc4MjYsImV4cCI6MjA4OTA3MzgyNn0.n_9T9i7tRNtBb8Q-MQ_9ZTiv5DDo8TVYq9AtzOLQTr8";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-    // Saugumas: Base64 koduoti duomenys (admin / gsgmt2026)
+    // Saugumas: admin / gsgmt2026
     const _u = "YWRtaW4="; 
     const _p = "Z3NnbXQyMDI2";
 
@@ -185,23 +201,26 @@
         { q: "Aš turiu tinklą, bet žuvies negaudau?", a: "krepsinis", key: "kodas2" }
     ];
 
-    // --- PRADŽIA ---
     window.onload = async () => {
         await checkGameStatus();
-        setTimeout(() => { document.getElementById('loader').style.opacity = '0'; 
-        setTimeout(() => document.getElementById('loader').style.display = 'none', 500); }, 1000);
+        setTimeout(() => { 
+            document.getElementById('loader').style.opacity = '0'; 
+            setTimeout(() => document.getElementById('loader').style.display = 'none', 500); 
+        }, 1000);
     };
 
     async function checkGameStatus() {
-        const { data } = await _supabase.from('nustatymai').select('*').eq('id', 1).single();
-        if (data) {
-            gameLocked = data.is_locked;
-            const btn = document.getElementById('start-game-btn');
-            const msg = document.getElementById('game-status-msg');
-            btn.disabled = gameLocked;
-            gameLocked ? msg.classList.remove('hidden') : msg.classList.add('hidden');
-            document.getElementById('status-text').innerText = "Būsena: " + (gameLocked ? "UŽRAKINTA 🔒" : "ATIDARYTA ✅");
-        }
+        try {
+            const { data } = await _supabase.from('nustatymai').select('*').eq('id', 1).single();
+            if (data) {
+                gameLocked = data.is_locked;
+                const btn = document.getElementById('start-game-btn');
+                const msg = document.getElementById('game-status-msg');
+                btn.disabled = gameLocked;
+                gameLocked ? msg.classList.remove('hidden') : msg.classList.add('hidden');
+                document.getElementById('status-text').innerText = "Būsena: " + (gameLocked ? "UŽRAKINTA 🔒" : "ATIDARYTA ✅");
+            }
+        } catch (e) { console.log("Būsenos klaida"); }
     }
 
     async function toggleGameLock() {
@@ -232,10 +251,14 @@
     async function renderTop3() {
         const { data } = await _supabase.from('rezultatai').select('*').order('score', { ascending: false }).limit(3);
         const list = document.getElementById('top3-list');
-        list.innerHTML = data && data.length ? "" : "Nėra rezultatų.";
-        data.forEach((r, i) => {
-            list.innerHTML += `<div class="list-item"><span>${i+1}. ${r.team}</span> <span>${r.score} tšk.</span></div>`;
-        });
+        list.innerHTML = "";
+        if (data && data.length) {
+            data.forEach((r, i) => {
+                list.innerHTML += `<div class="list-item"><span>${i+1}. ${r.team}</span> <span>${r.score} tšk.</span></div>`;
+            });
+        } else {
+            list.innerHTML = "Rezultatų dar nėra.";
+        }
     }
 
     async function adminAddResult() {
@@ -244,7 +267,7 @@
         const time = document.getElementById('add-time').value;
         const { error } = await _supabase.from('rezultatai').insert([{ team: name, score: pts, time_str: time }]);
         if (!error) {
-            Swal.fire('Įrašyta!', 'Komanda pridėta į TOP 3.', 'success');
+            Swal.fire('Įrašyta!', 'Komanda pridėta.', 'success');
             document.getElementById('add-name').value = "";
         }
     }
@@ -264,15 +287,25 @@
         Swal.fire({
             title: correct ? 'Teisingai! ✅' : 'Neteisingai ❌',
             text: correct ? 'Gali keliauti toliau.' : 'Bandyk rasti kitą užuominą.',
-            icon: correct ? 'success' : 'error',
-            confirmButtonText: 'Gerai'
+            icon: correct ? 'success' : 'error'
         }).then(() => {
             if(qIdx >= quizData.length - 1) {
+                const diff = Math.floor((new Date() - startTime) / 1000);
+                const timeStr = Math.floor(diff / 60) + ":" + (diff % 60).toString().padStart(2, '0');
+                
+                // Siunčiame į Formspree
+                fetch("https://formspree.io/f/mojklbzq", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Komanda: currentTeam, Rezultatas: score, Laikas: timeStr })
+                });
+
                 Swal.fire('Finišas!', `Surinkai ${score} taškų.`, 'info').then(() => location.reload());
             } else {
                 qIdx++;
                 document.getElementById('quiz-content').classList.add('hidden');
                 document.getElementById('open-scanner-btn').classList.remove('hidden');
+                document.getElementById('ans-input').value = "";
             }
         });
     }
