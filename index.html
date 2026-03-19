@@ -19,7 +19,6 @@
             background-size: cover; color: white; display: flex; justify-content: center; min-height: 100vh;
         }
 
-        /* Loading Screen */
         #loader {
             position: fixed; top:0; left:0; width:100%; height:100%; 
             background: black; z-index: 9999; display: flex; flex-direction: column;
@@ -55,18 +54,11 @@
             border: 1px solid white; background: rgba(255,255,255,0.05); color: white; text-align: center; font-size: 16px; outline: none;
         }
 
-        /* SĄRAŠO STILIUS SU GELTONAIS BRŪKŠNIAIS */
         .list-item { 
             background: rgba(255,255,255,0.1); 
-            margin: 8px 0; 
-            padding: 12px; 
-            border-radius: 8px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            border-left: 4px solid var(--accent);
-            font-size: 14px; 
-            text-align: left;
+            margin: 8px 0; padding: 12px; border-radius: 8px; 
+            display: flex; justify-content: space-between; align-items: center;
+            border-left: 4px solid var(--accent); font-size: 14px; text-align: left;
         }
         
         .ekspla-logo-sutvarkytas { max-width: 180px; filter: brightness(0) invert(1); opacity: 0.9; margin-top: 15px; }
@@ -160,17 +152,17 @@
         </div>
 
         <div id="quiz-step" class="hidden">
-            <div id="lock-status" style="margin-bottom: 15px;">🔒 RASKITE QR KODĄ</div>
+            <div id="lock-status" style="margin-bottom: 15px; color: var(--accent); font-weight: bold;">🔒 RASKITE QR KODĄ</div>
             <div id="scanner-container" class="hidden">
                 <div id="reader"></div>
                 <button class="menu-btn" onclick="stopScanner()">Atšaukti</button>
             </div>
             <div id="quiz-content" class="hidden">
-                <p id="riddle-text" style="font-style: italic; margin-bottom: 10px;"></p>
-                <input type="text" id="ans-input" placeholder="Atsakymas">
+                <p id="riddle-text" style="font-size: 18px; line-height: 1.4; margin-bottom: 15px;"></p>
+                <input type="text" id="ans-input" placeholder="Jūsų atsakymas">
                 <button class="menu-btn" onclick="checkAnswer()">Tikrinti</button>
             </div>
-            <button id="open-scanner-btn" class="menu-btn" style="background: white; color: black;" onclick="startScanner()">📷 SKENUOTI</button>
+            <button id="open-scanner-btn" class="menu-btn" style="background: white; color: black;" onclick="startScanner()">📷 SKENUOTI KODĄ</button>
         </div>
 
         <div id="top3-section" class="hidden">
@@ -188,19 +180,26 @@
 </div>
 
 <script>
+    // --- KONFIGŪRACIJA ---
     const SB_URL = "https://yvnifbghzoqmkslesgkh.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bmlmYmdoem9xbWtzbGVzZ2toIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0OTc4MjYsImV4cCI6MjA4OTA3MzgyNn0.n_9T9i7tRNtBb8Q-MQ_9ZTiv5DDo8TVYq9AtzOLQTr8";
     const _supabase = supabase.createClient(SB_URL, SB_KEY);
 
-    const _u = "YWRtaW4="; // admin
-    const _p = "Z3NnbXQyMDI2"; // gsgmt2026
+    const _u = "YWRtaW4="; 
+    const _p = "Z3NnbXQyMDI2";
 
     let gameLocked = false;
     let currentTeam = "", qIdx = 0, score = 0, startTime, scanner;
     
     const quizData = [
-        { q: "Aš turiu šimtus lapų, bet nesu medis?", a: "knyga", key: "kodas1" },
-        { q: "Aš turiu tinklą, bet žuvies negaudau?", a: "krepsinis", key: "kodas2" }
+        { q: "Kas režisavo filmą „Titanic“?", a: "james cameron", key: "kodas1" },
+        { q: "Kuris Lietuvos valdovas buvo Jogailos pusbrolis, kartu dalyvavo Žalgirio mūšyje?", a: "vytautas didysis", key: "kodas2" },
+        { q: "Kaip vadinasi organėlė ląstelėje, atsakinga už energijos gamybą?", a: "mitochondrija", key: "kodas3" },
+        { q: "Koks žemynas neturi aktyvių ugnikalnių?", a: "australija", key: "kodas4" },
+        { q: "Kiek laiko juostų turi Rusija?", a: "11", key: "kodas5" },
+        { q: "Kuri Šekspyro pjesė turi frazę „būti ar nebūti“?", a: "hamletas", key: "kodas6" },
+        { q: "Kurioje šalyje buvo išrastos bulvytės fri?", a: "belgijoje", key: "kodas7" },
+        { q: "Kurio gyvūno pienas yra natūraliai rožinis?", a: "hipopotamo", key: "kodas8" }
     ];
 
     window.onload = async () => {
@@ -212,13 +211,15 @@
     };
 
     async function checkGameStatus() {
-        const { data } = await _supabase.from('nustatymai').select('*').eq('id', 1).single();
-        if (data) {
-            gameLocked = data.is_locked;
-            document.getElementById('start-game-btn').disabled = gameLocked;
-            gameLocked ? document.getElementById('game-status-msg').classList.remove('hidden') : document.getElementById('game-status-msg').classList.add('hidden');
-            document.getElementById('status-text').innerText = "Būsena: " + (gameLocked ? "UŽRAKINTA 🔒" : "ATIDARYTA ✅");
-        }
+        try {
+            const { data } = await _supabase.from('nustatymai').select('*').eq('id', 1).single();
+            if (data) {
+                gameLocked = data.is_locked;
+                document.getElementById('start-game-btn').disabled = gameLocked;
+                gameLocked ? document.getElementById('game-status-msg').classList.remove('hidden') : document.getElementById('game-status-msg').classList.add('hidden');
+                document.getElementById('status-text').innerText = "Būsena: " + (gameLocked ? "UŽRAKINTA 🔒" : "ATIDARYTA ✅");
+            }
+        } catch (e) {}
     }
 
     async function toggleGameLock() {
@@ -247,7 +248,7 @@
         list.innerHTML = "";
         if (data && data.length) {
             data.forEach((r, i) => list.innerHTML += `<div class="list-item"><span>${i+1}. ${r.team}</span> <span>${r.score} tšk.</span></div>`);
-        } else list.innerHTML = "Nėra rezultatų.";
+        } else list.innerHTML = "Rezultatų dar nėra.";
     }
 
     async function loadAdminResultsList() {
@@ -281,8 +282,8 @@
         const confirm = await Swal.fire({title: 'Tikrai trinti?', showCancelButton: true, confirmButtonColor: '#ef4444'});
         if(confirm.isConfirmed) {
             const { error } = await _supabase.from('rezultatai').delete().eq('id', id);
-            if (error) Swal.fire('Klaida!', error.message, 'error');
-            else { Swal.fire('Ištrinta!', '', 'success'); loadAdminResultsList(); }
+            if (!error) { Swal.fire('Ištrinta!', '', 'success'); loadAdminResultsList(); }
+            else Swal.fire('Klaida!', error.message, 'error');
         }
     }
 
@@ -314,7 +315,8 @@
         if(correct) score++;
         Swal.fire(correct ? 'Teisingai! ✅' : 'Neteisingai ❌', '', correct ? 'success' : 'error').then(() => {
             if(qIdx >= quizData.length - 1) {
-                const timeStr = Math.floor((new Date() - startTime) / 1000 / 60) + ":" + (Math.floor((new Date() - startTime) / 1000) % 60).toString().padStart(2, '0');
+                const timeDiff = Math.floor((new Date() - startTime) / 1000);
+                const timeStr = Math.floor(timeDiff / 60) + ":" + (timeDiff % 60).toString().padStart(2, '0');
                 fetch("https://formspree.io/f/mojklbzq", { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ Komanda: currentTeam, Taskai: score, Laikas: timeStr }) });
                 Swal.fire('Finišas!', `Surinkai ${score} taškų.`, 'info').then(() => location.reload());
             } else {
@@ -340,7 +342,7 @@
                 stopScanner(); document.getElementById('quiz-content').classList.remove('hidden');
                 document.getElementById('riddle-text').innerText = quizData[qIdx].q;
                 document.getElementById('open-scanner-btn').classList.add('hidden');
-            } else Swal.fire('Ups!', 'Netinkamas kodas.', 'warning');
+            } else Swal.fire('Ups!', 'Netinkamas kodas šiai stotelei.', 'warning');
         });
     }
 
