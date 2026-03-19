@@ -54,6 +54,28 @@
             border: 1px solid white; background: rgba(255,255,255,0.05); color: white; text-align: center; font-size: 16px; outline: none;
         }
 
+        /* TOP 3 SPECIALUS STILIUS */
+        .top-winner { 
+            background: var(--accent) !important; 
+            color: black !important;
+            font-weight: 900 !important;
+            text-transform: uppercase !important;
+            font-size: 18px !important;
+            border: none !important;
+            margin: 10px 0 !important;
+            padding: 15px !important;
+        }
+
+        /* LIKUSIOS VIETOS */
+        .other-place { 
+            background: transparent !important; 
+            color: #aaa !important;
+            font-size: 12px !important;
+            text-transform: lowercase !important;
+            border-left: 2px solid rgba(255,255,255,0.2) !important;
+            padding: 8px !important;
+        }
+
         .list-item { 
             background: rgba(255,255,255,0.1); 
             margin: 8px 0; padding: 12px; border-radius: 8px; 
@@ -83,7 +105,7 @@
             <div id="game-status-msg" style="color: var(--error); margin-bottom: 10px; font-weight: bold;" class="hidden">🔴 ŽAIDIMAS LAIKINAI UŽDARYTAS</div>
             <button class="menu-btn" id="start-game-btn" onclick="showSection('team-selection')">Pradėti žaidimą</button>
             <button class="menu-btn" onclick="showSection('schedule-section')">📅 Tvarkaraštis</button>
-            <button class="menu-btn" onclick="showSection('top3-section')">🏆 TOP 3 Rezultatai</button>
+            <button class="menu-btn" onclick="showSection('top3-section')">🏆 Rezultatai</button>
             <button class="menu-btn" onclick="showSection('admin-login')">Mokinių taryba</button>
         </div>
 
@@ -137,7 +159,7 @@
                 <input type="hidden" id="edit-id">
                 <input type="text" id="add-name" placeholder="Komanda">
                 <input type="number" id="add-score" placeholder="Taškai">
-                <input type="text" id="add-time" placeholder="Laikas">
+                <input type="text" id="add-time" placeholder="Laikas (pvz. 05:40)">
                 <button id="save-btn" class="menu-btn" style="background: var(--success); border:none;" onclick="adminSaveResult()">IŠSAUGOTI</button>
                 <button id="cancel-edit" class="hidden" onclick="resetAdminForm()">Atšaukti</button>
             </div>
@@ -166,7 +188,7 @@
         </div>
 
         <div id="top3-section" class="hidden">
-            <h3>🏆 TOP 3 Rezultatai</h3>
+            <h3 style="color: var(--accent);">🏆 TURNYRINĖ LENTELĖ</h3>
             <div id="top3-list"></div>
             <button class="menu-btn" onclick="showSection('main-menu')">Atgal</button>
         </div>
@@ -243,12 +265,22 @@
     }
 
     async function renderTop3() {
-        const { data } = await _supabase.from('rezultatai').select('*').order('score', { ascending: false }).limit(3);
+        const { data } = await _supabase.from('rezultatai').select('*').order('score', { ascending: false }).order('time_str', { ascending: true });
         const list = document.getElementById('top3-list');
         list.innerHTML = "";
+        
         if (data && data.length) {
-            data.forEach((r, i) => list.innerHTML += `<div class="list-item"><span>${i+1}. ${r.team}</span> <span>${r.score} tšk.</span></div>`);
-        } else list.innerHTML = "Rezultatų dar nėra.";
+            data.forEach((r, i) => {
+                const isTop3 = i < 3;
+                list.innerHTML += `
+                    <div class="list-item ${isTop3 ? 'top-winner' : 'other-place'}">
+                        <span>${i+1}. ${r.team}</span> 
+                        <span>${r.score} TŠK. (${r.time_str})</span>
+                    </div>`;
+            });
+        } else {
+            list.innerHTML = "Rezultatų dar nėra.";
+        }
     }
 
     async function loadAdminResultsList() {
@@ -257,7 +289,7 @@
         container.innerHTML = "";
         data.forEach(r => {
             container.innerHTML += `
-                <div class="list-item">
+                <div class="list-item" style="border-left-color: var(--accent);">
                     <span>${r.team} (${r.score} tšk.)</span>
                     <div>
                         <button onclick="prepareEdit('${r.id}', '${r.team}', ${r.score}, '${r.time_str}')" style="background:none; border:none; cursor:pointer;">✏️</button>
@@ -316,7 +348,7 @@
         Swal.fire(correct ? 'Teisingai! ✅' : 'Neteisingai ❌', '', correct ? 'success' : 'error').then(() => {
             if(qIdx >= quizData.length - 1) {
                 const timeDiff = Math.floor((new Date() - startTime) / 1000);
-                const timeStr = Math.floor(timeDiff / 60) + ":" + (timeDiff % 60).toString().padStart(2, '0');
+                const timeStr = Math.floor(timeDiff / 60).toString().padStart(2, '0') + ":" + (timeDiff % 60).toString().padStart(2, '0');
                 fetch("https://formspree.io/f/mojklbzq", { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ Komanda: currentTeam, Taskai: score, Laikas: timeStr }) });
                 Swal.fire('Finišas!', `Surinkai ${score} taškų.`, 'info').then(() => location.reload());
             } else {
